@@ -1,0 +1,17 @@
+html, body {
+    margin: 0;
+    padding: 0;
+}
+
+#panel {
+    background: black;
+    width: 100vw;
+    height: 100vh;
+    color: white;
+    h1 {
+        font-size: 20px;
+    }
+    p {
+        font-size: 14px;
+    }
+}
