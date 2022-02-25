@@ -1,8 +1,5 @@
-html, body {
-    margin: 0;
-    padding: 0;
-}
-
+@import 'utilities/_mixins';
+@import 'layouts/default';
 #panel {
     background: black;
     width: 100vw;

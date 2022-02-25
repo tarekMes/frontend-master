@@ -6,15 +6,39 @@ const tslint = require("gulp-tslint"),
     webp = require("gulp-webp"),
     sassLint = require("gulp-sass-lint"),
     ts = require("gulp-typescript"),
-    uglify = require("gulp-uglify"),
+    uglify = require("gulp-uglify-es").default,
+    sourcemaps = require("gulp-sourcemaps"),
     pug = require("gulp-pug"),
     rename = require("gulp-rename"),
     sass = require("gulp-sass")(require("sass")),
     browserSync = require("browser-sync"),
     reload = browserSync.reload,
-    concat = require("gulp-concat");
-
+    concat = require("gulp-concat"),
+    ttf2woff = require("gulp-ttf2woff"),
+    consolidate = require("gulp-consolidate"),
+    iconfont = require("gulp-iconfont");
+var runTimestamp = Math.round(Date.now() / 1000);
 sass.compiler = require("node-sass");
+
+function build_font_icon() {
+    return src("src/icons/*.svg")
+        .pipe(
+            iconfont({
+                fontName: "myfont", // required
+                prependUnicode: true, // recommended option
+                formats: ["ttf", "eot", "woff"], // default, 'woff2' and 'svg' are available
+                timestamp: runTimestamp, // recommended to get consistent builds when watching files
+            })
+        )
+        .on("glyphs", function (glyphs, options) {
+            console.log(glyphs, options);
+        })
+        .pipe(dest("dist/fonts/"));
+}
+
+function build_font() {
+    return src("src/fonts/*.ttf").pipe(ttf2woff()).pipe(dest("dist/fonts"));
+}
 
 function ts_build() {
     return src("src/ts/**/*.ts")
@@ -27,20 +51,36 @@ function ts_build() {
         .pipe(
             ts({
                 noImplicitAny: true,
-                outFile: "main.js",
             })
         )
-        .pipe(uglify())
-        .pipe(rename("main.min.js"))
+        .pipe(
+            rename({
+                suffix: ".min",
+            })
+        )
+        .pipe(sourcemaps.init())
+        .pipe(
+            uglify({
+                ecma: "2016",
+            })
+        )
+        .pipe(sourcemaps.write("./maps"))
         .pipe(dest("dist/javascript"));
 }
 function scss_build() {
-    return src("src/sass/**/*.s+(a|c)ss")
+    return src("src/sass/*.s+(a|c)ss")
         .pipe(sassLint({ configFile: "sass-lint.yml" }))
         .pipe(sassLint.format())
         .pipe(sassLint.failOnError())
         .pipe(sass().on("error", sass.logError))
+        .pipe(
+            rename({
+                suffix: ".min",
+            })
+        )
+        .pipe(sourcemaps.init())
         .pipe(cssnano())
+        .pipe(sourcemaps.write("./maps"))
         .pipe(dest("dist/css"));
 }
 
@@ -89,7 +129,14 @@ function pug_watcher() {
 }
 
 exports.default = series(
-    parallel(pug_build, ts_build, scss_build, imagemin_build),
+    parallel(
+        build_font,
+        build_font_icon,
+        pug_build,
+        ts_build,
+        scss_build,
+        imagemin_build
+    ),
     serve_site,
     parallel(pug_watcher, ts_watcher, scss_watcher, image_watcher)
 );
