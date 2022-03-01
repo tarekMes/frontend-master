@@ -2,5 +2,14 @@ extends ./layouts/main.pug
 block content
     #panel
         img(src="/img/cat.webp", alt="", srcset="")
-        h1 Hello World!
+        h1 
+            i.icon.icon-settings 
+            | Hello World!
+        i.icon.icon-language(style="color: green")
         p Lorem ipsum dolor sit amet consectetur adipisicing elit. Quibusdam laudantium voluptas quae consequuntur reiciendis, quo odit nihil ducimus facilis fuga omnis cum quaerat inventore, tempore voluptatibus neque, facere consequatur est!
+    form#test_form() 
+        label(for="name") name 
+        input#name(type="text", name="name")
+        label(for="email") email 
+        input#email(type="email", name="email")    
+        button(type="submit") Submit

@@ -1,4 +1,5 @@
 const { src, dest, watch, series, parallel } = require("gulp");
+const { FALSE } = require("node-sass");
 
 const tslint = require("gulp-tslint"),
     cssnano = require("gulp-cssnano"),
@@ -14,14 +15,21 @@ const tslint = require("gulp-tslint"),
     browserSync = require("browser-sync"),
     reload = browserSync.reload,
     concat = require("gulp-concat"),
-    ttf2woff = require("gulp-ttf2woff"),
+    ttf2woff = require("gulp-ttf2woff2"),
     consolidate = require("gulp-consolidate"),
-    iconfont = require("gulp-iconfont");
+    iconfont = require("gulp-iconfont"),
+    iconfontCss = require("gulp-iconfont-css");
+
 var runTimestamp = Math.round(Date.now() / 1000);
 sass.compiler = require("node-sass");
 
 function build_font_icon() {
     return src("src/icons/*.svg")
+        .pipe(
+            iconfontCss({
+                fontName: "myfont",
+            })
+        )
         .pipe(
             iconfont({
                 fontName: "myfont", // required
@@ -41,31 +49,32 @@ function build_font() {
 }
 
 function ts_build() {
-    return src("src/ts/**/*.ts")
-        .pipe(
-            tslint({
-                formatter: "verbose",
-            })
-        )
-        .pipe(tslint.report())
-        .pipe(
-            ts({
-                noImplicitAny: true,
-            })
-        )
-        .pipe(
-            rename({
-                suffix: ".min",
-            })
-        )
-        .pipe(sourcemaps.init())
-        .pipe(
-            uglify({
-                ecma: "2016",
-            })
-        )
-        .pipe(sourcemaps.write("./maps"))
-        .pipe(dest("dist/javascript"));
+    return (
+        src("src/ts/**/*.ts")
+            .pipe(
+                tslint({
+                    formatter: "verbose",
+                })
+            )
+            .pipe(tslint.report())
+            .pipe(
+                ts({
+                    noImplicitAny: true,
+                    module: "es6",
+                    target: "ES6",
+                    removeComments: true,
+                })
+            )
+            // .pipe(
+            //     rename({
+            //         suffix: ".min",
+            //     })
+            // )
+            .pipe(sourcemaps.init())
+            .pipe(uglify())
+            .pipe(sourcemaps.write("./maps"))
+            .pipe(dest("dist/javascript"))
+    );
 }
 function scss_build() {
     return src("src/sass/*.s+(a|c)ss")
@@ -112,6 +121,10 @@ function browser_reload(done) {
     done();
 }
 
+function svg_watcher() {
+    watch(["src/icons/*.svg"], series(build_font_icon));
+}
+
 function ts_watcher() {
     watch(["src/ts/**/*.ts"], series(ts_build, browser_reload));
 }
@@ -138,5 +151,5 @@ exports.default = series(
         imagemin_build
     ),
     serve_site,
-    parallel(pug_watcher, ts_watcher, scss_watcher, image_watcher)
+    parallel(svg_watcher, pug_watcher, ts_watcher, scss_watcher, image_watcher)
 );

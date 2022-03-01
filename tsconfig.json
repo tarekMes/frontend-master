@@ -2,8 +2,8 @@
     "exclude": ["node_modules", "**/node_modules/*", "dist"],
     "compilerOptions": {
         "sourceMap": true,
-        "module": "commonjs",
         "noImplicitAny": true,
-        "target": "es6"
+        "module": "es6",
+        "target": "ES5",
     }
 }
